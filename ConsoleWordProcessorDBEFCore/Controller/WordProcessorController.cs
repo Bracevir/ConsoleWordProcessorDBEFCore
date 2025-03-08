@@ -16,35 +16,55 @@ namespace ConsoleWordProcessorDBEFCore.Controller
         public void LoadWordsFromFile(string filePath)
         {
             var wordCounts = new Dictionary<string, int>();
-
-            using (var reader = new StreamReader(filePath))
+            try
             {
-                string line;
-                while ((line = reader.ReadLine()) != null)
+                // Проверяем, существует ли файл
+                if (File.Exists(filePath))
                 {
-                    var words = line.Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (var word in words)
+                    using (var reader = new StreamReader(filePath))
                     {
-                        if (word.Length >= 3 && word.Length <= 20)
+                        string line;
+                        int count = 0;
+                        while ((line = reader.ReadLine()) != null)
                         {
-                            if (wordCounts.ContainsKey(word))
+                            // Разбиваем строку на слова
+                            var words = line.Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries); // разбиваем файл на слова
+                            
+                            foreach (var word in words)
                             {
-                                wordCounts[word]++;
+                                if (word.Length >= 3 && word.Length <= 20) // проверка длины слова
+                                {
+                                    if (wordCounts.ContainsKey(word))
+                                    {
+                                        wordCounts[word]++;
+                                    }
+                                    else
+                                    {
+                                        wordCounts[word] = 1;
+                                    }
+                                    count++;
+                                }
                             }
-                            else
-                            {
-                                wordCounts[word] = 1;
-                            }
+                            
                         }
+                        Console.WriteLine($"Извлечено {count} новых слов");
                     }
                 }
+                else
+                {
+                    Console.WriteLine("Файл не найден.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Произошла ошибка: {ex.Message}");
             }
 
             using (var context = new AppDbContext())
             {
                 context.EnsureDatabaseCreated();
                 Console.WriteLine("База данных проверена/создана успешно");
-                foreach (var pair in wordCounts.Where(w => w.Value >= 4))
+                foreach (var pair in wordCounts.Where(w => w.Value >= 4)) // число вхождений и запись в базу
                 {
                     var existingWord = context.Words.SingleOrDefault(w => w.Text == pair.Key);
                     if (existingWord != null)
@@ -57,6 +77,7 @@ namespace ConsoleWordProcessorDBEFCore.Controller
                     }
                 }
                 context.SaveChanges();
+                Console.WriteLine("Записаны извлеченные слова");
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using ConsoleWordProcessorDBEFCore.Controller;
+using System;
 
 Console.Write("Введите путь к файлу: ");
 string filePath = Console.ReadLine();
@@ -8,8 +9,9 @@ try
 {
 	_wordProceccor.LoadWordsFromFile(filePath);
 }
-catch (Exception)
+catch (Exception ex)
 {
-
-	throw;
+    Console.WriteLine($"Произошла ошибка: {ex.Message}");
 }
+
+Console.ReadLine();
